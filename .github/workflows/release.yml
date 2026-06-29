@@ -28,7 +28,7 @@ jobs:
             binary: devmate
             archive: tar.gz
           - name: macOS Intel
-            os: macos-13
+            os: macos-14
             target: x86_64-apple-darwin
             binary: devmate
             archive: tar.gz
