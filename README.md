@@ -14,11 +14,14 @@ The planned Windows install path is winget:
 winget install ADELA.Devmate
 ```
 
-Until the winget package is accepted, install from GitHub Releases:
+Until the winget package is accepted, install from GitHub Releases after the first release is published:
 
 ```powershell
 $version = "v0.1.0"
-iwr "https://github.com/GOALLINNOOUT/Devmate/releases/download/$version/devmate-$version-x86_64-pc-windows-msvc.zip" -OutFile devmate.zip
+$repo = "https://github.com/GOALLINNOOUT/Devmate"
+$asset = "devmate-$version-x86_64-pc-windows-msvc.zip"
+$url = "$repo/releases/download/$version/$asset"
+iwr $url -OutFile devmate.zip
 Expand-Archive devmate.zip -DestinationPath devmate -Force
 .\devmate\devmate.exe setup
 ```
