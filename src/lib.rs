@@ -19,6 +19,8 @@ pub fn run(cli: Cli) -> Result<()> {
         Commands::System(args) => commands::system::run(args),
         Commands::Doctor(args) => commands::doctor::run(args),
         Commands::Setup(args) => commands::setup::run(args),
+        Commands::Update(args) => commands::lifecycle::update(args),
+        Commands::Uninstall(args) => commands::lifecycle::uninstall(args),
         Commands::Kill(args) => commands::kill::run(args),
     }
 }

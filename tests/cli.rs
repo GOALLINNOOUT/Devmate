@@ -149,7 +149,30 @@ fn setup_outputs_first_run_guidance() {
         .success()
         .stdout(predicate::str::contains("DevMate setup"))
         .stdout(predicate::str::contains("devmate doctor"))
+        .stdout(predicate::str::contains("devmate update"))
         .stdout(predicate::str::contains("Rust"));
+}
+
+#[test]
+fn update_dry_run_json_reports_plan() {
+    Command::cargo_bin("devmate")
+        .unwrap()
+        .args(["update", "--dry-run", "--json"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"action\": \"update\""))
+        .stdout(predicate::str::contains("install_method"));
+}
+
+#[test]
+fn uninstall_dry_run_json_reports_plan() {
+    Command::cargo_bin("devmate")
+        .unwrap()
+        .args(["uninstall", "--dry-run", "--json"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"action\": \"uninstall\""))
+        .stdout(predicate::str::contains("install_method"));
 }
 
 #[test]

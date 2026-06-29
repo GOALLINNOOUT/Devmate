@@ -69,14 +69,10 @@ fn next_commands() -> Vec<String> {
 }
 
 fn install_help() -> Vec<String> {
-    [
-        "winget upgrade ADELA.Devmate",
-        "cargo install devmate --force",
-        "cargo binstall devmate --force",
-    ]
-    .iter()
-    .map(|command| (*command).to_string())
-    .collect()
+    ["devmate update", "devmate update --dry-run"]
+        .iter()
+        .map(|command| (*command).to_string())
+        .collect()
 }
 
 fn render(report: &SetupReport) {

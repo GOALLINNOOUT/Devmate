@@ -24,6 +24,8 @@ pub enum Commands {
     System(SystemArgs),
     Doctor(DoctorArgs),
     Setup(SetupArgs),
+    Update(UpdateArgs),
+    Uninstall(UninstallArgs),
     Kill(KillArgs),
 }
 
@@ -203,6 +205,26 @@ pub struct DoctorArgs {
 pub struct SetupArgs {
     #[arg(default_value = ".")]
     pub path: PathBuf,
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct UpdateArgs {
+    #[arg(long)]
+    pub dry_run: bool,
+    #[arg(long)]
+    pub yes: bool,
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct UninstallArgs {
+    #[arg(long)]
+    pub dry_run: bool,
+    #[arg(long)]
+    pub yes: bool,
     #[arg(long)]
     pub json: bool,
 }

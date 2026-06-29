@@ -184,12 +184,37 @@ devmate files stats
 ## Update
 
 ```powershell
-winget upgrade ADELA.Devmate
-cargo install devmate --force
-cargo binstall devmate --force
+devmate update
 ```
 
-Use the command that matches how you installed DevMate.
+`devmate update` detects the install method and runs the right package-manager command when possible:
+
+- winget install: `winget upgrade --id ADELA.Devmate --exact`
+- cargo install: `cargo install devmate --force`
+- cargo-binstall install: `cargo binstall devmate --force --no-confirm`
+- manual GitHub Release download: downloads the latest release and replaces the current executable after DevMate exits
+
+Preview first:
+
+```powershell
+devmate update --dry-run
+devmate update --json
+```
+
+## Uninstall
+
+```powershell
+devmate uninstall
+```
+
+`devmate uninstall` asks before removing anything. It uses winget or cargo when DevMate was installed that way. For a manual zip/tar install, it schedules the current `devmate` executable for deletion after DevMate exits and reminds you to remove that folder from `PATH`.
+
+Non-interactive:
+
+```powershell
+devmate uninstall --yes
+devmate uninstall --dry-run
+```
 
 ## Quick Start
 
@@ -208,6 +233,8 @@ devmate setup --json
 devmate analyze --json
 devmate doctor --json
 devmate system --json
+devmate update --json
+devmate uninstall --json
 ```
 
 ## Commands
@@ -260,6 +287,42 @@ devmate setup --json
 ```
 
 It reports detected project types, missing required/recommended/optional tools, useful next commands, and update commands.
+
+### `update`
+
+Updates DevMate using the install method that is available on this machine.
+
+```powershell
+devmate update [--dry-run] [--yes] [--json]
+```
+
+Examples:
+
+```powershell
+devmate update
+devmate update --dry-run
+devmate update --json
+```
+
+Package-manager installs update through the package manager. Manual GitHub Release installs start a background updater that downloads the latest release for your OS and replaces the current executable after DevMate exits.
+
+### `uninstall`
+
+Uninstalls DevMate.
+
+```powershell
+devmate uninstall [--dry-run] [--yes] [--json]
+```
+
+Examples:
+
+```powershell
+devmate uninstall
+devmate uninstall --dry-run
+devmate uninstall --yes
+```
+
+It asks for confirmation unless `--yes` is supplied. Manual zip/tar installs delete the current executable after DevMate exits; package-manager installs use the package manager.
 
 ### `json`
 
