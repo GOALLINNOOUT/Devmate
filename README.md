@@ -1,0 +1,347 @@
+# DevMate
+
+DevMate is a Rust CLI for everyday developer diagnostics: project analysis, JSON utilities, `.env` checks, Git summaries, file audits, JWT helpers, system status, toolchain checks, and safe process cleanup.
+
+It is designed to be useful both for humans in a terminal and for scripts through `--json` output.
+
+## Install And Setup
+
+### Requirements
+
+- Rust and Cargo
+- Git, if you want Git summaries
+- Optional project tools such as Node, Python, Docker, Go, and database CLIs, depending on what you want `doctor` to inspect
+
+### Build From Source
+
+```powershell
+cargo build --release
+```
+
+The built binary will be:
+
+```powershell
+.\target\release\devmate.exe
+```
+
+### Install On PATH
+
+```powershell
+cargo install --path .
+```
+
+On Windows, Cargo normally installs to:
+
+```powershell
+C:\Users\User\.cargo\bin\devmate.exe
+```
+
+If `devmate` still behaves like an older build, check which binary your shell is using:
+
+```powershell
+where.exe devmate
+```
+
+Then reinstall with `cargo install --path .` or run the freshly built binary directly with `.\target\release\devmate.exe`.
+
+## Quick Start
+
+```powershell
+devmate analyze
+devmate doctor
+devmate system --watch
+devmate files stats
+devmate env inspect --example .env.example
+```
+
+Most diagnostic commands support `--json` for automation:
+
+```powershell
+devmate analyze --json
+devmate doctor --json
+devmate system --json
+```
+
+## Commands
+
+### `analyze`
+
+Analyzes a project directory. The path defaults to the current directory.
+
+```powershell
+devmate analyze [path] [--json] [--large-file-bytes <BYTES>]
+```
+
+What it reports:
+
+- Detected languages, frameworks, and tooling
+- File, folder, line, comment, and blank-line counts
+- Dependency summaries from supported manifests
+- Largest files
+- TODO/FIXME markers
+- Debug logging markers
+- Duplicate asset groups
+- Large files
+- A project health score
+
+Examples:
+
+```powershell
+devmate analyze
+devmate analyze C:\path\to\project
+devmate analyze --json
+devmate analyze --large-file-bytes 1048576
+```
+
+Detection includes Rust, Go, Python, Node, TypeScript, JavaScript, React, Next.js, Express, Deno, Docker, Kubernetes, Terraform, Java, Kotlin, Scala, C, C++, C#, PHP, Ruby, Swift, Dart/Flutter, Elixir, Erlang, Haskell, Lua, R, Julia, Zig, Nim, SQL, and related frameworks/tools where manifests reveal them.
+
+### `json`
+
+Validates and transforms JSON files.
+
+```powershell
+devmate json validate <file>
+devmate json format <file> [-o <output>]
+devmate json minify <file> [-o <output>]
+devmate json diff <left> <right>
+```
+
+Examples:
+
+```powershell
+devmate json validate package.json
+devmate json format data.json --output pretty.json
+devmate json minify data.json --output data.min.json
+devmate json diff old.json new.json
+```
+
+### `env`
+
+Inspects `.env` files and compares them with variables referenced in source files.
+
+```powershell
+devmate env inspect [path] [-f <file>] [-e <example>] [--json]
+```
+
+Defaults:
+
+- `path`: `.`
+- `file`: `.env`
+
+Examples:
+
+```powershell
+devmate env inspect
+devmate env inspect . --example .env.example
+devmate env inspect . --file .env.local --json
+```
+
+It reports duplicates, empty values, malformed lines, variables referenced by source code, values missing from `.env`, and differences against `.env.example`.
+
+### `git`
+
+Summarizes a Git repository.
+
+```powershell
+devmate git [path] [--json] [--commits <N>]
+```
+
+Examples:
+
+```powershell
+devmate git
+devmate git . --commits 20
+devmate git --json
+```
+
+It reports branch state, clean/dirty status, modified files, ahead/behind counts, recent commits, contributors, and branches.
+
+### `files`
+
+Searches, visualizes, and audits files while ignoring common heavy folders such as `.git`, `node_modules`, and `target`.
+
+```powershell
+devmate files search <pattern> [path] [--regex] [--json]
+devmate files tree [path] [-d <depth>] [--json]
+devmate files stats [path] [--json]
+devmate files dupes [path] [--json]
+```
+
+Examples:
+
+```powershell
+devmate files search TODO
+devmate files search "println!" src --regex
+devmate files tree . --depth 4
+devmate files stats
+devmate files dupes --json
+```
+
+### `jwt`
+
+Generates, inspects, and verifies HMAC JSON Web Tokens.
+
+Supported algorithms:
+
+- `hs256`
+- `hs384`
+- `hs512`
+
+```powershell
+devmate jwt generate --secret <secret> [--algorithm hs256] [--claim key=value] [--expires-in <seconds>]
+devmate jwt decode <token> [--secret <secret>] [--algorithm hs256]
+devmate jwt verify <token> --secret <secret> [--algorithm hs256]
+devmate jwt interactive
+```
+
+Examples:
+
+```powershell
+devmate jwt generate --secret secret --claim sub=123
+devmate jwt decode <token>
+devmate jwt decode --secret secret <token>
+devmate jwt verify <token> --secret secret
+devmate jwt generate --secret secret --claim admin=true --claim count=3
+```
+
+`decode` without a secret performs unverified inspection. `decode --secret` verifies while still showing the decoded header and claims. `verify` returns verified claims only.
+
+### `system`
+
+Shows system information.
+
+```powershell
+devmate system [--json] [--watch] [--interval <seconds>]
+```
+
+Examples:
+
+```powershell
+devmate system
+devmate system --json
+devmate system --watch
+devmate system --watch --interval 2
+```
+
+`--watch` opens a live dashboard view with clearer CPU, RAM, disk, network, battery, GPU, and Rust status. It samples on the selected interval, keeps the CPU sampler warm for more stable readings, and redraws only when visible values change. Press `Ctrl+C` to stop it. If you still see repeated blocks or broken table borders, your shell may be running an old installed binary; check with `where.exe devmate` and reinstall.
+
+### `doctor`
+
+Checks installed developer tools and versions.
+
+```powershell
+devmate doctor [path] [--json]
+```
+
+Examples:
+
+```powershell
+devmate doctor
+devmate doctor C:\path\to\project
+devmate doctor --json
+```
+
+Doctor checks baseline tools such as Git and common editors, then adds project-relevant checks inferred from files such as `Cargo.toml`, `package.json`, `pyproject.toml`, `go.mod`, `Dockerfile`, and lockfiles.
+
+Tools are labeled:
+
+- `required`: needed for the detected project stack
+- `recommended`: useful for normal workflows
+- `optional`: nice to have, but not a failure if missing
+
+### `kill`
+
+Safely previews resource-heavy processes and asks before terminating anything.
+
+```powershell
+devmate kill [--top <N>] [--dry-run] [--yes] [--all-listed] [--name <PATTERN>] [--json]
+```
+
+Examples:
+
+```powershell
+devmate kill
+devmate kill --top 10
+devmate kill --dry-run --json
+devmate kill --name chrome
+devmate kill --all-listed --dry-run
+```
+
+Safety behavior:
+
+- Ranks candidates by CPU and RAM pressure
+- Filters protected/system processes
+- Does not target the current DevMate process or parent shell
+- Prompts before killing unless `--yes`, `--all-listed`, or `--dry-run` is used
+- Reports per-process success or failure
+
+Use `--dry-run` first if you only want to see what DevMate would target.
+
+## JSON Output
+
+Use `--json` when you want stable machine-readable output for scripts:
+
+```powershell
+devmate analyze --json
+devmate doctor --json
+devmate files stats --json
+devmate kill --dry-run --json
+```
+
+Human-readable output uses ASCII tables so it works better in older Windows PowerShell code pages.
+
+## Development
+
+Format, lint, and test:
+
+```powershell
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+```
+
+Build release:
+
+```powershell
+cargo build --release
+```
+
+Install the current workspace build:
+
+```powershell
+cargo install --path .
+```
+
+## Troubleshooting
+
+### `devmate` Still Shows Old Output
+
+PowerShell may be running an installed binary instead of the one you just built.
+
+```powershell
+where.exe devmate
+```
+
+If it points to `C:\Users\User\.cargo\bin\devmate.exe`, update it:
+
+```powershell
+cargo install --path .
+```
+
+Or run the local release binary directly:
+
+```powershell
+.\target\release\devmate.exe system
+```
+
+### Broken Table Characters
+
+Current DevMate source uses ASCII table borders. If you see mojibake or broken box-drawing characters, you are almost certainly running an older installed binary.
+
+### Cargo Warning About `C:\Users\User`
+
+If Cargo prints `warn: could not canonicalize path C:\Users\User`, that is a Cargo/environment warning and not a DevMate runtime failure.
+
+## License
+
+MIT
