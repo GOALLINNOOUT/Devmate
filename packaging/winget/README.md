@@ -12,9 +12,9 @@ Use this folder as the release checklist for submitting DevMate to winget after 
 
 ## Submission flow
 
-1. Create a GitHub Release such as `v0.1.0`.
+1. Create a GitHub Release such as `v0.1.4`.
 2. Confirm the Windows zip asset exists:
-   `devmate-v0.1.0-x86_64-pc-windows-msvc.zip`
+   `devmate-v0.1.4-x86_64-pc-windows-msvc.zip`
 3. Copy the SHA256 from the generated `.sha256` asset.
 4. Install wingetcreate:
 
@@ -27,7 +27,7 @@ winget install Microsoft.WingetCreate
 Important: `wingetcreate new` takes the installer URL as a positional argument. It does not accept `--id`, `--name`, `--publisher`, `--version`, or `--urls` on current versions.
 
 ```powershell
-wingetcreate new https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.0/devmate-v0.1.0-x86_64-pc-windows-msvc.zip
+wingetcreate new https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.4/devmate-v0.1.4-x86_64-pc-windows-msvc.zip
 ```
 
 6. Edit the generated manifest values if needed:
@@ -35,7 +35,7 @@ wingetcreate new https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.
 - Package identifier: `ADELA.Devmate`
 - Package name: `DevMate`
 - Publisher: `ADELA`
-- Version: `0.1.0`
+- Version: `0.1.4`
 - Package URL: `https://github.com/GOALLINNOOUT/Devmate`
 - License: `MIT`
 - Short description: `Developer diagnostics CLI`
