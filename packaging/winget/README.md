@@ -22,19 +22,20 @@ Use this folder as the release checklist for submitting DevMate to winget after 
 winget install Microsoft.WingetCreate
 ```
 
-5. Create the manifest from the GitHub Release URL:
+5. Create the manifest from the GitHub Release URL.
+
+Important: `wingetcreate new` takes the installer URL as a positional argument. It does not accept `--id`, `--name`, `--publisher`, `--version`, or `--urls` on current versions.
 
 ```powershell
-wingetcreate new `
-  --id ADELA.Devmate `
-  --name DevMate `
-  --publisher ADELA `
-  --version 0.1.0 `
-  --urls https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.0/devmate-v0.1.0-x86_64-pc-windows-msvc.zip
+wingetcreate new https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.0/devmate-v0.1.0-x86_64-pc-windows-msvc.zip
 ```
 
 6. Edit the generated manifest values if needed:
 
+- Package identifier: `ADELA.Devmate`
+- Package name: `DevMate`
+- Publisher: `ADELA`
+- Version: `0.1.0`
 - Package URL: `https://github.com/GOALLINNOOUT/Devmate`
 - License: `MIT`
 - Short description: `Developer diagnostics CLI`
