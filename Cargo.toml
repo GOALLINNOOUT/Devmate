@@ -1,6 +1,6 @@
 [package]
 name = "devmate"
-version = "0.1.0"
+version = "0.1.5"
 edition = "2021"
 rust-version = "1.82"
 description = "A polished developer companion CLI for project analysis, files, JSON, env, git, JWT, system, and toolchain health checks."

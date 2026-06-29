@@ -15,6 +15,7 @@ use crate::{
 
 const PACKAGE_ID: &str = "ADELA.Devmate";
 const CRATE_NAME: &str = "devmate";
+const REPOSITORY_URL: &str = "https://github.com/GOALLINNOOUT/Devmate";
 const RELEASES_URL: &str = "https://github.com/GOALLINNOOUT/Devmate/releases/latest";
 const RELEASE_API_URL: &str = "https://api.github.com/repos/GOALLINNOOUT/Devmate/releases/latest";
 
@@ -69,7 +70,6 @@ pub struct LifecyclePlan {
 #[serde(rename_all = "kebab-case")]
 pub enum InstallMethod {
     Winget,
-    CargoBinstall,
     Cargo,
     Manual,
 }
@@ -108,28 +108,21 @@ fn plan(action: &str) -> Result<LifecyclePlan> {
             ],
             vec!["Uses Windows Package Manager.".to_string()],
         ),
-        ("update", InstallMethod::CargoBinstall) => (
-            true,
-            "cargo".to_string(),
-            vec![
-                "binstall".to_string(),
-                CRATE_NAME.to_string(),
-                "--force".to_string(),
-                "--no-confirm".to_string(),
-            ],
-            vec!["Uses cargo-binstall for a prebuilt Rust binary when available.".to_string()],
-        ),
         ("update", InstallMethod::Cargo) => (
             true,
             "cargo".to_string(),
             vec![
                 "install".to_string(),
-                CRATE_NAME.to_string(),
+                "--git".to_string(),
+                REPOSITORY_URL.to_string(),
                 "--force".to_string(),
             ],
-            vec!["Uses cargo install and may compile from source.".to_string()],
+            vec![
+                "Uses cargo install from the DevMate GitHub repository.".to_string(),
+                "DevMate is not published on crates.io yet.".to_string(),
+            ],
         ),
-        ("uninstall", InstallMethod::CargoBinstall | InstallMethod::Cargo) => (
+        ("uninstall", InstallMethod::Cargo) => (
             true,
             "cargo".to_string(),
             vec!["uninstall".to_string(), CRATE_NAME.to_string()],
@@ -187,11 +180,7 @@ pub fn detect_install_method(executable: &Path) -> InstallMethod {
     .to_ascii_lowercase();
 
     if exe.starts_with(&cargo_bin) {
-        if cargo_binstall_available() {
-            InstallMethod::CargoBinstall
-        } else {
-            InstallMethod::Cargo
-        }
+        InstallMethod::Cargo
     } else {
         InstallMethod::Manual
     }
@@ -226,19 +215,6 @@ fn winget_package_installed() -> bool {
                     .to_ascii_lowercase()
                     .contains(&PACKAGE_ID.to_ascii_lowercase())
         })
-        .unwrap_or(false)
-}
-
-fn cargo_binstall_available() -> bool {
-    which::which("cargo")
-        .ok()
-        .and_then(|cargo| {
-            Command::new(cargo)
-                .args(["binstall", "--version"])
-                .output()
-                .ok()
-        })
-        .map(|output| output.status.success())
         .unwrap_or(false)
 }
 
@@ -401,10 +377,7 @@ mod tests {
         });
 
         let method = detect_install_method(&path);
-        assert!(matches!(
-            method,
-            InstallMethod::Cargo | InstallMethod::CargoBinstall
-        ));
+        assert_eq!(method, InstallMethod::Cargo);
     }
 
     #[test]

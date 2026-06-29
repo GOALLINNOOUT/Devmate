@@ -151,13 +151,7 @@ xattr -d com.apple.quarantine ~/.local/bin/devmate
 If you already have Rust:
 
 ```powershell
-cargo install devmate
-```
-
-If you use `cargo-binstall`:
-
-```powershell
-cargo binstall devmate
+cargo install --git https://github.com/GOALLINNOOUT/Devmate --force
 ```
 
 ### Build From Source
@@ -190,8 +184,7 @@ devmate update
 `devmate update` detects the install method and runs the right package-manager command when possible:
 
 - winget install: `winget upgrade --id ADELA.Devmate --exact`
-- cargo install: `cargo install devmate --force`
-- cargo-binstall install: `cargo binstall devmate --force --no-confirm`
+- cargo install: `cargo install --git https://github.com/GOALLINNOOUT/Devmate --force`
 - manual GitHub Release download: downloads the latest release and replaces the current executable after DevMate exits
 
 Preview first:
