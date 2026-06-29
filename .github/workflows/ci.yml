@@ -17,6 +17,7 @@ jobs:
         os:
           - windows-latest
           - ubuntu-latest
+          - macos-latest
 
     steps:
       - name: Checkout
@@ -51,3 +52,12 @@ jobs:
           .\target\release\devmate.exe analyze --json
           .\target\release\devmate.exe doctor --json
           .\target\release\devmate.exe system --json
+
+      - name: Unix smoke test
+        if: runner.os != 'Windows'
+        run: |
+          ./target/release/devmate --help
+          ./target/release/devmate setup --json
+          ./target/release/devmate analyze --json
+          ./target/release/devmate doctor --json
+          ./target/release/devmate system --json

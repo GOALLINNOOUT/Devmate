@@ -65,6 +65,87 @@ You can also add it with the Windows UI:
 4. Click **New** and paste the folder path that contains `devmate.exe`.
 5. Click **OK**, close Terminal, and open a new Terminal.
 
+Release downloads are published at:
+https://github.com/GOALLINNOOUT/Devmate/releases
+
+Expected release files:
+
+- `devmate-v0.1.0-x86_64-pc-windows-msvc.zip`
+- `devmate-v0.1.0-x86_64-unknown-linux-gnu.tar.gz`
+- `devmate-v0.1.0-x86_64-apple-darwin.tar.gz`
+- `devmate-v0.1.0-aarch64-apple-darwin.tar.gz`
+
+### Linux
+
+Download:
+https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.0/devmate-v0.1.0-x86_64-unknown-linux-gnu.tar.gz
+
+```bash
+curl -L \
+  https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.0/devmate-v0.1.0-x86_64-unknown-linux-gnu.tar.gz \
+  -o devmate-linux.tar.gz
+tar -xzf devmate-linux.tar.gz
+cd devmate-v0.1.0-x86_64-unknown-linux-gnu
+./devmate setup
+```
+
+To install it for your user:
+
+```bash
+mkdir -p ~/.local/bin
+cp devmate ~/.local/bin/devmate
+chmod +x ~/.local/bin/devmate
+```
+
+Make sure `~/.local/bin` is on your `PATH`, then open a new terminal and verify:
+
+```bash
+devmate --version
+devmate setup
+```
+
+### macOS
+
+Intel Macs:
+
+```bash
+curl -L \
+  https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.0/devmate-v0.1.0-x86_64-apple-darwin.tar.gz \
+  -o devmate-macos.tar.gz
+```
+
+Apple Silicon Macs:
+
+```bash
+curl -L \
+  https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.0/devmate-v0.1.0-aarch64-apple-darwin.tar.gz \
+  -o devmate-macos.tar.gz
+```
+
+Then extract and install:
+
+```bash
+tar -xzf devmate-macos.tar.gz
+cd devmate-v0.1.0-*-apple-darwin
+./devmate setup
+mkdir -p ~/.local/bin
+cp devmate ~/.local/bin/devmate
+chmod +x ~/.local/bin/devmate
+```
+
+Make sure `~/.local/bin` is on your `PATH`, then open a new terminal and verify:
+
+```bash
+devmate --version
+devmate setup
+```
+
+If macOS blocks the binary because it was downloaded from the internet, open **System Settings > Privacy & Security** and allow DevMate, or remove the quarantine attribute:
+
+```bash
+xattr -d com.apple.quarantine ~/.local/bin/devmate
+```
+
 ### Rust Users
 
 If you already have Rust:
