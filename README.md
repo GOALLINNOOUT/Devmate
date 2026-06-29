@@ -37,12 +37,33 @@ If you extracted with File Explorer, open the folder that contains `devmate.exe`
 .\devmate.exe setup
 ```
 
-After adding the folder that contains `devmate.exe` to `PATH`, verify from any terminal:
+To make `devmate` work from any terminal, add the folder that contains `devmate.exe` to your user `PATH`.
+
+PowerShell:
+
+```powershell
+$devmatePath = "$PWD"
+[Environment]::SetEnvironmentVariable(
+  "Path",
+  [Environment]::GetEnvironmentVariable("Path", "User") + ";$devmatePath",
+  "User"
+)
+```
+
+Close and reopen Terminal, then verify:
 
 ```powershell
 devmate --version
 devmate setup
 ```
+
+You can also add it with the Windows UI:
+
+1. Press **Start** and search **Environment Variables**.
+2. Open **Edit environment variables for your account**.
+3. Select **Path**, then **Edit**.
+4. Click **New** and paste the folder path that contains `devmate.exe`.
+5. Click **OK**, close Terminal, and open a new Terminal.
 
 ### Rust Users
 
