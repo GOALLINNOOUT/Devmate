@@ -16,17 +16,28 @@ winget install ADELA.Devmate
 
 Until the winget package is accepted, install from GitHub Releases after the first release is published:
 
+Download:
+https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.0/devmate-v0.1.0-x86_64-pc-windows-msvc.zip
+
 ```powershell
-$version = "v0.1.0"
-$repo = "https://github.com/GOALLINNOOUT/Devmate"
-$asset = "devmate-$version-x86_64-pc-windows-msvc.zip"
-$url = "$repo/releases/download/$version/$asset"
-iwr $url -OutFile devmate.zip
+iwr "https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.0/devmate-v0.1.0-x86_64-pc-windows-msvc.zip" -OutFile devmate.zip
 Expand-Archive devmate.zip -DestinationPath devmate -Force
-.\devmate\devmate.exe setup
 ```
 
-After adding the folder that contains `devmate.exe` to `PATH`, verify:
+Then open the extracted folder and run the app:
+
+```powershell
+cd .\devmate\devmate-v0.1.0-x86_64-pc-windows-msvc
+.\devmate.exe setup
+```
+
+If you extracted with File Explorer, open the folder that contains `devmate.exe`, right-click inside the folder, choose **Open in Terminal**, then run:
+
+```powershell
+.\devmate.exe setup
+```
+
+After adding the folder that contains `devmate.exe` to `PATH`, verify from any terminal:
 
 ```powershell
 devmate --version
