@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+      - "v*.*.*-*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Build Windows release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Test
+        run: cargo test
+
+      - name: Build
+        run: cargo build --release --locked
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}"
+          $name = "devmate-$version-x86_64-pc-windows-msvc"
+          New-Item -ItemType Directory -Path "dist\$name" | Out-Null
+          Copy-Item "target\release\devmate.exe" "dist\$name\devmate.exe"
+          Copy-Item "README.md" "dist\$name\README.md"
+          Copy-Item "LICENSE" "dist\$name\LICENSE"
+          Copy-Item "CHANGELOG.md" "dist\$name\CHANGELOG.md"
+          Compress-Archive -Path "dist\$name\*" -DestinationPath "dist\$name.zip" -Force
+          Get-FileHash "dist\$name.zip" -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash)  $name.zip" } |
+            Set-Content "dist\$name.zip.sha256"
+
+      - name: Smoke test package binary
+        shell: pwsh
+        run: |
+          .\target\release\devmate.exe --version
+          .\target\release\devmate.exe setup --json
+          .\target\release\devmate.exe doctor --json
+          .\target\release\devmate.exe system --json
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip
+            dist/*.sha256
+          body_path: CHANGELOG.md

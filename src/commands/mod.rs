@@ -6,4 +6,5 @@ pub mod git;
 pub mod json;
 pub mod jwt;
 pub mod kill;
+pub mod setup;
 pub mod system;

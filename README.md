@@ -1,48 +1,79 @@
 # DevMate
 
-DevMate is a Rust CLI for everyday developer diagnostics: project analysis, JSON utilities, `.env` checks, Git summaries, file audits, JWT helpers, system status, toolchain checks, and safe process cleanup.
+Diagnose projects, env files, Git, JWTs, files, system health, and dev tools from one CLI.
 
 It is designed to be useful both for humans in a terminal and for scripts through `--json` output.
 
-## Install And Setup
+## 5-Minute Setup
 
-### Requirements
+### Windows
 
-- Rust and Cargo
-- Git, if you want Git summaries
-- Optional project tools such as Node, Python, Docker, Go, and database CLIs, depending on what you want `doctor` to inspect
+The planned Windows install path is winget:
+
+```powershell
+winget install ADELA.Devmate
+```
+
+Until the winget package is accepted, install from GitHub Releases:
+
+```powershell
+$version = "v0.1.0"
+iwr "https://github.com/GOALLINNOOUT/Devmate/releases/download/$version/devmate-$version-x86_64-pc-windows-msvc.zip" -OutFile devmate.zip
+Expand-Archive devmate.zip -DestinationPath devmate -Force
+.\devmate\devmate.exe setup
+```
+
+After adding the folder that contains `devmate.exe` to `PATH`, verify:
+
+```powershell
+devmate --version
+devmate setup
+```
+
+### Rust Users
+
+If you already have Rust:
+
+```powershell
+cargo install devmate
+```
+
+If you use `cargo-binstall`:
+
+```powershell
+cargo binstall devmate
+```
 
 ### Build From Source
 
 ```powershell
+git clone https://github.com/GOALLINNOOUT/Devmate.git
+cd Devmate
 cargo build --release
-```
-
-The built binary will be:
-
-```powershell
-.\target\release\devmate.exe
-```
-
-### Install On PATH
-
-```powershell
 cargo install --path .
 ```
 
-On Windows, Cargo normally installs to:
+## First Run
 
 ```powershell
-C:\Users\User\.cargo\bin\devmate.exe
+devmate setup
+devmate doctor
+devmate analyze
+devmate system
+devmate files stats
 ```
 
-If `devmate` still behaves like an older build, check which binary your shell is using:
+`setup` is the onboarding command. It detects the current project, lists missing required/recommended/optional tools, and suggests the next commands to try.
+
+## Update
 
 ```powershell
-where.exe devmate
+winget upgrade ADELA.Devmate
+cargo install devmate --force
+cargo binstall devmate --force
 ```
 
-Then reinstall with `cargo install --path .` or run the freshly built binary directly with `.\target\release\devmate.exe`.
+Use the command that matches how you installed DevMate.
 
 ## Quick Start
 
@@ -57,6 +88,7 @@ devmate env inspect --example .env.example
 Most diagnostic commands support `--json` for automation:
 
 ```powershell
+devmate setup --json
 devmate analyze --json
 devmate doctor --json
 devmate system --json
@@ -94,6 +126,24 @@ devmate analyze --large-file-bytes 1048576
 ```
 
 Detection includes Rust, Go, Python, Node, TypeScript, JavaScript, React, Next.js, Express, Deno, Docker, Kubernetes, Terraform, Java, Kotlin, Scala, C, C++, C#, PHP, Ruby, Swift, Dart/Flutter, Elixir, Erlang, Haskell, Lua, R, Julia, Zig, Nim, SQL, and related frameworks/tools where manifests reveal them.
+
+### `setup`
+
+Runs a first-use check for the current project and suggests what to do next.
+
+```powershell
+devmate setup [path] [--json]
+```
+
+Examples:
+
+```powershell
+devmate setup
+devmate setup C:\path\to\project
+devmate setup --json
+```
+
+It reports detected project types, missing required/recommended/optional tools, useful next commands, and update commands.
 
 ### `json`
 
@@ -158,7 +208,7 @@ It reports branch state, clean/dirty status, modified files, ahead/behind counts
 
 ### `files`
 
-Searches, visualizes, and audits files while ignoring common heavy folders such as `.git`, `node_modules`, and `target`.
+Searches, visualizes, and audits files while respecting gitignore-style rules and always skipping common heavy folders such as `.git`, `node_modules`, and `target`.
 
 ```powershell
 devmate files search <pattern> [path] [--regex] [--json]
@@ -292,6 +342,34 @@ Human-readable output uses ASCII tables so it works better in older Windows Powe
 
 ## Development
 
+### Release Checklist
+
+1. Update `CHANGELOG.md`.
+2. Run:
+
+```powershell
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+cargo package --list
+cargo publish --dry-run
+```
+
+3. Tag and push:
+
+```powershell
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+4. Confirm the GitHub Release includes:
+
+- Windows zip
+- SHA256 checksum
+- Release notes
+
+5. Submit or update the winget package using `packaging/winget/README.md`.
+
 Format, lint, and test:
 
 ```powershell
@@ -333,6 +411,16 @@ Or run the local release binary directly:
 ```powershell
 .\target\release\devmate.exe system
 ```
+
+### GitHub Release Install Fails
+
+Make sure the version in the download URL exists on GitHub Releases:
+
+```powershell
+https://github.com/GOALLINNOOUT/Devmate/releases
+```
+
+If the zip is downloaded from a browser, Windows may mark it as downloaded from the internet. Right-click the zip or extracted executable, open Properties, and choose Unblock if Windows shows that option.
 
 ### Broken Table Characters
 

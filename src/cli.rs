@@ -23,6 +23,7 @@ pub enum Commands {
     Jwt(JwtArgs),
     System(SystemArgs),
     Doctor(DoctorArgs),
+    Setup(SetupArgs),
     Kill(KillArgs),
 }
 
@@ -192,6 +193,14 @@ pub struct SystemArgs {
 
 #[derive(Debug, Args)]
 pub struct DoctorArgs {
+    #[arg(default_value = ".")]
+    pub path: PathBuf,
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct SetupArgs {
     #[arg(default_value = ".")]
     pub path: PathBuf,
     #[arg(long)]

@@ -2,9 +2,25 @@
 name = "devmate"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.82"
 description = "A polished developer companion CLI for project analysis, files, JSON, env, git, JWT, system, and toolchain health checks."
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/GOALLINNOOUT/Devmate"
+homepage = "https://github.com/GOALLINNOOUT/Devmate"
+documentation = "https://github.com/GOALLINNOOUT/Devmate#readme"
+keywords = ["cli", "developer-tools", "diagnostics", "jwt", "git"]
+categories = ["command-line-utilities", "development-tools"]
+include = [
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "SECURITY.md",
+]
 
 [dependencies]
 anyhow = "1"
@@ -33,3 +49,10 @@ which = "6"
 assert_cmd = "2"
 predicates = "3"
 tempfile = "3"
+
+[workspace.metadata.dist]
+cargo-dist-version = "0.28.0"
+ci = "github"
+installers = ["shell", "powershell"]
+targets = ["x86_64-pc-windows-msvc"]
+install-updater = false

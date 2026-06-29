@@ -18,6 +18,7 @@ pub fn run(cli: Cli) -> Result<()> {
         Commands::Jwt(args) => commands::jwt::run(args),
         Commands::System(args) => commands::system::run(args),
         Commands::Doctor(args) => commands::doctor::run(args),
+        Commands::Setup(args) => commands::setup::run(args),
         Commands::Kill(args) => commands::kill::run(args),
     }
 }

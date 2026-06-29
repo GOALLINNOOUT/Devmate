@@ -134,6 +134,25 @@ fn analyze_human_output_uses_ascii_tables() {
 }
 
 #[test]
+fn setup_outputs_first_run_guidance() {
+    let dir = tempdir().unwrap();
+    fs::write(
+        dir.path().join("Cargo.toml"),
+        "[package]\nname=\"sample\"\nversion=\"0.1.0\"\n",
+    )
+    .unwrap();
+
+    Command::cargo_bin("devmate")
+        .unwrap()
+        .args(["setup", dir.path().to_str().unwrap()])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("DevMate setup"))
+        .stdout(predicate::str::contains("devmate doctor"))
+        .stdout(predicate::str::contains("Rust"));
+}
+
+#[test]
 fn jwt_generate_and_decode_work() {
     let output = Command::cargo_bin("devmate")
         .unwrap()
