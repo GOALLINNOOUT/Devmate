@@ -31,7 +31,7 @@ cd .\devmate\devmate-v0.1.0-x86_64-pc-windows-msvc
 .\devmate.exe setup
 ```
 
-If you extracted with File Explorer, open the folder that contains `devmate.exe`, right-click inside the folder, choose **Open in Terminal**, then run:
+If you extracted with File Explorer, open the folder that contains `devmate.exe`, press and hold shift and right-click inside the folder, choose **Open in Terminal**, then run:
 
 ```powershell
 .\devmate.exe setup
