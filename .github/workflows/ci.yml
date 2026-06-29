@@ -28,6 +28,16 @@ jobs:
         with:
           components: rustfmt, clippy
 
+      - name: Install OpenSSL (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install openssl@3 pkg-config
+          openssl_prefix="$(brew --prefix openssl@3)"
+          echo "OPENSSL_DIR=$openssl_prefix" >> "$GITHUB_ENV"
+          echo "PKG_CONFIG_PATH=$openssl_prefix/lib/pkgconfig:$PKG_CONFIG_PATH" >> "$GITHUB_ENV"
+          echo "LDFLAGS=-L$openssl_prefix/lib" >> "$GITHUB_ENV"
+          echo "CPPFLAGS=-I$openssl_prefix/include" >> "$GITHUB_ENV"
+
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
 
