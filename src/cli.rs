@@ -2,11 +2,21 @@ use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
+pub const HERO: &str = r#"
+   ____              __  ___      __
+  / __ \___ _   __  /  |/  /___ _/ /____
+ / / / / _ \ | / / / /|_/ / __ `/ __/ _ \
+/ /_/ /  __/ |/ / / /  / / /_/ / /_/  __/
+\____/\___/|___/ /_/  /_/\__,_/\__/\___/
+"#;
+
 #[derive(Debug, Parser)]
 #[command(
     name = "devmate",
     version,
-    about = "A polished developer companion CLI"
+    about = "A polished developer companion CLI",
+    before_help = HERO,
+    arg_required_else_help = true
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -34,7 +44,11 @@ pub struct AnalyzeArgs {
     #[arg(default_value = ".")]
     pub path: PathBuf,
     #[arg(long)]
+    pub details: bool,
+    #[arg(long)]
     pub json: bool,
+    #[arg(long)]
+    pub config: Option<PathBuf>,
     #[arg(long, default_value_t = 512 * 1024)]
     pub large_file_bytes: u64,
 }

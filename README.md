@@ -1,8 +1,22 @@
 # DevMate
 
-Diagnose projects, env files, Git, JWTs, files, system health, and dev tools from one CLI.
+DevMate is a developer diagnostics CLI for project analysis, env files, Git, JWTs, files, system health, installed tools, updates, and safe cleanup.
 
 It is designed to be useful both for humans in a terminal and for scripts through `--json` output.
+
+## What DevMate Does
+
+- `analyze`: audits projects or individual source files with language/framework detection, LOC stats, dependency summaries, health scoring, warnings, recommendations, and optional detailed architecture/git/complexity insight.
+- `setup`: first-run onboarding for the current project.
+- `doctor`: checks important developer tools for the detected project stack.
+- `system`: shows one-shot or live system status.
+- `files`: searches, summarizes, trees, and finds duplicate files while respecting gitignore rules.
+- `env`: inspects `.env` files and compares expected/used variables.
+- `git`: summarizes repository state, commits, branches, and contributors.
+- `json`: validates, formats, minifies, and diffs JSON.
+- `jwt`: generates, decodes, and verifies HMAC JWTs.
+- `kill`: safely previews and terminates selected resource-heavy processes.
+- `update` / `uninstall`: manages DevMate based on how it was installed.
 
 ## 5-Minute Setup
 
@@ -151,7 +165,7 @@ xattr -d com.apple.quarantine ~/.local/bin/devmate
 If you already have Rust:
 
 ```powershell
-cargo install --git https://github.com/GOALLINNOOUT/Devmate --force
+cargo install devmate --force
 ```
 
 ### Build From Source
@@ -184,7 +198,7 @@ devmate update
 `devmate update` detects the install method and runs the right package-manager command when possible:
 
 - winget install: `winget upgrade --id ADELA.Devmate --exact`
-- cargo install: `cargo install --git https://github.com/GOALLINNOOUT/Devmate --force`
+- cargo install: `cargo install devmate --force`
 - manual GitHub Release download: downloads the latest release and replaces the current executable after DevMate exits
 
 Preview first:
@@ -234,34 +248,68 @@ devmate uninstall --json
 
 ### `analyze`
 
-Analyzes a project directory. The path defaults to the current directory.
+Analyzes a project directory or a single source file. The target defaults to the current directory.
 
 ```powershell
-devmate analyze [path] [--json] [--large-file-bytes <BYTES>]
+devmate analyze [target] [--details] [--json] [--config <devmate.toml>] [--large-file-bytes <BYTES>]
 ```
 
 What it reports:
 
+- Project name
 - Detected languages, frameworks, and tooling
+- Transparent health score and risk level
 - File, folder, line, comment, and blank-line counts
 - Dependency summaries from supported manifests
+- File type and language breakdowns
 - Largest files
 - TODO/FIXME markers
 - Debug logging markers
 - Duplicate asset groups
 - Large files
-- A project health score
+- Actionable warnings and recommendations
+
+Detailed project mode adds:
+
+- Architecture/import graph summaries
+- Circular dependency detection where import syntax is supported
+- Duplicate code block detection
+- Large functions and deep nesting
+- Git intelligence such as branch, status, 30-day commits, contributors, churn, and hotspots
+- Issue objects with problem, impact, suggested fix, affected files, priority, category, and estimated effort
+
+Single-file mode reports:
+
+- Language, size, LOC, comments, and blanks
+- Imports and exports
+- Functions, classes, interfaces, enums, and traits where detectable
+- Complexity, nesting depth, large functions, TODO/FIXME markers, debug logging, risk score, and recommendations
 
 Examples:
 
 ```powershell
 devmate analyze
 devmate analyze C:\path\to\project
+devmate analyze src\commands\analyze.rs
+devmate analyze --details
 devmate analyze --json
+devmate analyze --config devmate.toml
 devmate analyze --large-file-bytes 1048576
 ```
 
-Detection includes Rust, Go, Python, Node, TypeScript, JavaScript, React, Next.js, Express, Deno, Docker, Kubernetes, Terraform, Java, Kotlin, Scala, C, C++, C#, PHP, Ruby, Swift, Dart/Flutter, Elixir, Erlang, Haskell, Lua, R, Julia, Zig, Nim, SQL, and related frameworks/tools where manifests reveal them.
+Detection includes Rust, Go, Python, Node, TypeScript, JavaScript, React, Next.js, Express, NestJS, Vite, Vue, Nuxt, Angular, Astro, Svelte, Deno, Docker, Kubernetes, Terraform, Java, Kotlin, Scala, C, C++, C#, PHP, Ruby, Swift, Dart/Flutter, Elixir, Erlang, Haskell, Lua, R, Julia, Zig, Nim, SQL, and related frameworks/tools where manifests reveal them.
+
+Optional `devmate.toml`:
+
+```toml
+ignore = ["dist", "coverage"]
+max_file_lines = 500
+max_function_lines = 80
+max_nesting_depth = 5
+warn_console_log = true
+warn_todo = true
+health_fail_below = 75
+```
 
 ### `setup`
 

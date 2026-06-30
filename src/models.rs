@@ -27,9 +27,13 @@ pub struct Dependency {
 #[derive(Debug, Serialize)]
 pub struct AnalyzeReport {
     pub root: PathBuf,
+    pub target_kind: String,
+    pub project_name: String,
     pub project_types: Vec<String>,
     pub stats: LineStats,
     pub file_types: BTreeMap<String, usize>,
+    pub languages: Vec<AnalyzeLanguage>,
+    pub frameworks: Vec<String>,
     pub dependencies: Vec<Dependency>,
     pub largest_files: Vec<FileEntry>,
     pub todo_count: usize,
@@ -37,7 +41,138 @@ pub struct AnalyzeReport {
     pub duplicate_assets: Vec<Vec<PathBuf>>,
     pub large_files: Vec<FileEntry>,
     pub health_score: u8,
+    pub risk_level: String,
+    pub health_breakdown: Vec<HealthScoreItem>,
     pub warnings: Vec<String>,
+    pub issues: Vec<AnalyzeIssue>,
+    pub recommendations: Vec<AnalyzeRecommendation>,
+    pub git: Option<AnalyzeGit>,
+    pub architecture: AnalyzeArchitecture,
+    pub hotspots: Vec<AnalyzeHotspot>,
+    pub config_used: AnalyzeConfigUsed,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct AnalyzeLanguage {
+    pub name: String,
+    pub files: usize,
+    pub lines: usize,
+    pub bytes: u64,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct HealthScoreItem {
+    pub label: String,
+    pub points: i32,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct AnalyzeIssue {
+    pub problem: String,
+    pub why_it_matters: String,
+    pub suggested_fix: String,
+    pub affected_files: Vec<PathBuf>,
+    pub priority: String,
+    pub category: String,
+    pub estimated_effort: String,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct AnalyzeRecommendation {
+    pub priority: String,
+    pub action: String,
+    pub reason: String,
+    pub estimated_effort: String,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct AnalyzeGit {
+    pub branch: String,
+    pub clean: bool,
+    pub commits_30_days: usize,
+    pub most_modified_files: Vec<AnalyzeHotspot>,
+    pub contributors: Vec<GitContributor>,
+    pub ahead: usize,
+    pub behind: usize,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct AnalyzeArchitecture {
+    pub local_imports: Vec<AnalyzeImportEdge>,
+    pub circular_dependencies: Vec<Vec<PathBuf>>,
+    pub skipped_reason: Option<String>,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct AnalyzeImportEdge {
+    pub from: PathBuf,
+    pub to: String,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct AnalyzeHotspot {
+    pub path: PathBuf,
+    pub score: usize,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct AnalyzeConfigUsed {
+    pub ignore: Vec<String>,
+    pub max_file_lines: usize,
+    pub max_function_lines: usize,
+    pub max_nesting_depth: usize,
+    pub warn_console_log: bool,
+    pub warn_todo: bool,
+    pub health_fail_below: u8,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(tag = "target_kind", rename_all = "lowercase")]
+pub enum AnalyzeTargetReport {
+    Project(AnalyzeReport),
+    File(AnalyzeFileReport),
+}
+
+#[derive(Debug, Serialize)]
+pub struct AnalyzeFileReport {
+    pub target_kind: String,
+    pub path: PathBuf,
+    pub language: String,
+    pub bytes: u64,
+    pub stats: LineStats,
+    pub symbols: Vec<AnalyzeSymbol>,
+    pub imports: Vec<String>,
+    pub exports: Vec<String>,
+    pub complexity: AnalyzeComplexity,
+    pub todo_count: usize,
+    pub logging_count: usize,
+    pub issues: Vec<AnalyzeIssue>,
+    pub risk_score: u8,
+    pub risk_level: String,
+    pub recommendations: Vec<AnalyzeRecommendation>,
+    pub config_used: AnalyzeConfigUsed,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct AnalyzeSymbol {
+    pub kind: String,
+    pub name: String,
+    pub line: usize,
+    pub visibility: Option<String>,
+    pub lines: usize,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct AnalyzeComplexity {
+    pub functions: usize,
+    pub classes: usize,
+    pub interfaces: usize,
+    pub enums: usize,
+    pub traits: usize,
+    pub imports: usize,
+    pub exports: usize,
+    pub max_nesting_depth: usize,
+    pub large_functions: Vec<AnalyzeSymbol>,
 }
 
 #[derive(Debug, Serialize)]
@@ -82,7 +217,7 @@ pub struct GitCommit {
     pub time: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct GitContributor {
     pub name: String,
     pub commits: usize,

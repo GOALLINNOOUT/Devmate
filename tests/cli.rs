@@ -4,6 +4,20 @@ use std::fs;
 use tempfile::tempdir;
 
 #[test]
+fn top_level_help_shows_hero() {
+    Command::cargo_bin("devmate")
+        .unwrap()
+        .arg("--help")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(r"\____/\___/|___/"))
+        .stdout(predicate::str::contains(
+            "A polished developer companion CLI",
+        ))
+        .stdout(predicate::str::contains("DevMate - developer diagnostics").not());
+}
+
+#[test]
 fn json_validate_accepts_valid_file() {
     let dir = tempdir().unwrap();
     let file = dir.path().join("data.json");
