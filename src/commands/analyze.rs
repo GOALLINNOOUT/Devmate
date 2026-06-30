@@ -42,21 +42,21 @@ pub fn run(args: AnalyzeArgs) -> Result<()> {
     let target = analyze_target(&args.path, &config)?;
     if args.json {
         match &target {
-            TargetReport::Project(report) => output::print_json(report)?,
-            TargetReport::File(report) => output::print_json(report)?,
+            TargetReport::Project(report) => output::print_json(report.as_ref())?,
+            TargetReport::File(report) => output::print_json(report.as_ref())?,
         }
     } else {
         match &target {
-            TargetReport::Project(report) => render_project(report, args.details),
-            TargetReport::File(report) => render_file(report),
+            TargetReport::Project(report) => render_project(report.as_ref(), args.details),
+            TargetReport::File(report) => render_file(report.as_ref()),
         }
     }
     Ok(())
 }
 
 enum TargetReport {
-    Project(AnalyzeReport),
-    File(AnalyzeFileReport),
+    Project(Box<AnalyzeReport>),
+    File(Box<AnalyzeFileReport>),
 }
 
 pub fn analyze(root: &Path, large_file_bytes: u64) -> Result<AnalyzeReport> {
@@ -69,9 +69,13 @@ fn analyze_target(target: &Path, config: &AnalyzeConfig) -> Result<TargetReport>
         return Err(DevMateError::MissingPath(target.to_path_buf()).into());
     }
     if target.is_file() {
-        Ok(TargetReport::File(analyze_file_target(target, config)?))
+        Ok(TargetReport::File(Box::new(analyze_file_target(
+            target, config,
+        )?)))
     } else if target.is_dir() {
-        Ok(TargetReport::Project(analyze_project(target, config)?))
+        Ok(TargetReport::Project(Box::new(analyze_project(
+            target, config,
+        )?)))
     } else {
         Err(anyhow::anyhow!(
             "unsupported analyze target: {}",
@@ -166,19 +170,18 @@ fn analyze_project(root: &Path, config: &AnalyzeConfig) -> Result<AnalyzeReport>
     let architecture = architecture(all_import_edges, &analyses);
     let git_info = git_intelligence(root).ok();
     let hotspots = project_hotspots(&analyses, git_info.as_ref());
-    let mut issues = project_issues(
+    let mut issues = project_issues(ProjectIssueContext {
         root,
-        &project_types,
-        &dependencies,
+        project_types: &project_types,
+        dependencies: &dependencies,
         todo_count,
         logging_count,
-        &large_files,
-        &duplicate_assets,
-        &duplicate_code,
-        &architecture,
-        &hotspots,
-        config,
-    );
+        large_files: &large_files,
+        duplicate_assets: &duplicate_assets,
+        duplicate_code: &duplicate_code,
+        architecture: &architecture,
+        hotspots: &hotspots,
+    });
     for file in &analyses {
         issues.extend(file.issues.clone());
     }
@@ -1097,81 +1100,82 @@ fn file_issues(
     issues
 }
 
-fn project_issues(
-    root: &Path,
-    project_types: &[String],
-    dependencies: &[Dependency],
+struct ProjectIssueContext<'a> {
+    root: &'a Path,
+    project_types: &'a [String],
+    dependencies: &'a [Dependency],
     todo_count: usize,
     logging_count: usize,
-    large_files: &[FileEntry],
-    duplicate_assets: &[Vec<PathBuf>],
-    duplicate_code: &[Vec<PathBuf>],
-    architecture: &AnalyzeArchitecture,
-    hotspots: &[AnalyzeHotspot],
-    _config: &AnalyzeConfig,
-) -> Vec<AnalyzeIssue> {
+    large_files: &'a [FileEntry],
+    duplicate_assets: &'a [Vec<PathBuf>],
+    duplicate_code: &'a [Vec<PathBuf>],
+    architecture: &'a AnalyzeArchitecture,
+    hotspots: &'a [AnalyzeHotspot],
+}
+
+fn project_issues(ctx: ProjectIssueContext<'_>) -> Vec<AnalyzeIssue> {
     let mut issues = Vec::new();
-    if project_types.iter().any(|kind| kind == "Unknown") {
+    if ctx.project_types.iter().any(|kind| kind == "Unknown") {
         issues.push(issue(
             "Unknown project type",
             "DevMate could not infer a language or ecosystem.",
             "Add a recognizable manifest or source files.",
-            vec![root.to_path_buf()],
+            vec![ctx.root.to_path_buf()],
             "Medium",
             "detection",
             "Small",
         ));
     }
-    if dependencies.is_empty() {
+    if ctx.dependencies.is_empty() {
         issues.push(issue(
             "No dependencies detected",
             "Missing dependency data can make audits incomplete.",
             "Check whether supported manifest files are committed.",
-            vec![root.to_path_buf()],
+            vec![ctx.root.to_path_buf()],
             "Low",
             "dependencies",
             "Small",
         ));
     }
-    if !root.join("README.md").exists() && !root.join("README").exists() {
+    if !ctx.root.join("README.md").exists() && !ctx.root.join("README").exists() {
         issues.push(issue(
             "Missing README",
             "A missing README slows onboarding and support.",
             "Add a README with setup, usage, and troubleshooting instructions.",
-            vec![root.to_path_buf()],
+            vec![ctx.root.to_path_buf()],
             "Medium",
             "documentation",
             "Small",
         ));
     }
-    if todo_count > 10 {
+    if ctx.todo_count > 10 {
         issues.push(issue(
             "High TODO/FIXME count",
             "Many unresolved markers indicate accumulated technical debt.",
             "Triage markers and convert important ones into tracked tasks.",
-            vec![root.to_path_buf()],
+            vec![ctx.root.to_path_buf()],
             "Medium",
             "technical-debt",
             "Small",
         ));
     }
-    if logging_count > 10 {
+    if ctx.logging_count > 10 {
         issues.push(issue(
             "High debug logging count",
             "Debug output can leak data and obscure useful production logs.",
             "Remove debug logs or gate them behind structured logging levels.",
-            vec![root.to_path_buf()],
+            vec![ctx.root.to_path_buf()],
             "Medium",
             "quality",
             "Small",
         ));
     }
-    if !large_files.is_empty() {
+    if !ctx.large_files.is_empty() {
         issues.push(issue(
             "Large files detected",
             "Large files are often hotspots for bugs and merge conflicts.",
             "Split the largest files into smaller modules.",
-            large_files
+            ctx.large_files
                 .iter()
                 .take(5)
                 .map(|entry| entry.path.clone())
@@ -1181,12 +1185,12 @@ fn project_issues(
             "Medium",
         ));
     }
-    if !duplicate_assets.is_empty() {
+    if !ctx.duplicate_assets.is_empty() {
         issues.push(issue(
             "Duplicate assets detected",
             "Duplicate assets increase repository size and maintenance work.",
             "Keep one canonical asset and update references.",
-            duplicate_assets
+            ctx.duplicate_assets
                 .iter()
                 .flat_map(|group| group.iter().cloned())
                 .take(5)
@@ -1196,12 +1200,12 @@ fn project_issues(
             "Small",
         ));
     }
-    if !duplicate_code.is_empty() {
+    if !ctx.duplicate_code.is_empty() {
         issues.push(issue(
             "Duplicate code blocks detected",
             "Repeated code multiplies bug-fix and change effort.",
             "Extract shared behavior into a common helper or component.",
-            duplicate_code
+            ctx.duplicate_code
                 .iter()
                 .flat_map(|group| group.iter().cloned())
                 .take(5)
@@ -1211,12 +1215,12 @@ fn project_issues(
             "Medium",
         ));
     }
-    if !architecture.circular_dependencies.is_empty() {
+    if !ctx.architecture.circular_dependencies.is_empty() {
         issues.push(issue(
             "Circular dependencies detected",
             "Cycles make modules harder to test, reuse, and refactor.",
             "Move shared contracts into a lower-level module and remove bidirectional imports.",
-            architecture
+            ctx.architecture
                 .circular_dependencies
                 .iter()
                 .flat_map(|group| group.iter().cloned())
@@ -1227,12 +1231,12 @@ fn project_issues(
             "Medium",
         ));
     }
-    if hotspots.iter().any(|hotspot| hotspot.score >= 5) {
+    if ctx.hotspots.iter().any(|hotspot| hotspot.score >= 5) {
         issues.push(issue(
             "High-churn hotspots",
             "Frequently changed files with complexity are more likely to produce regressions.",
             "Prioritize tests and refactoring around the highest-churn files.",
-            hotspots
+            ctx.hotspots
                 .iter()
                 .take(5)
                 .map(|hotspot| hotspot.path.clone())

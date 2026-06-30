@@ -129,8 +129,8 @@ pub struct AnalyzeConfigUsed {
 #[derive(Debug, Serialize)]
 #[serde(tag = "target_kind", rename_all = "lowercase")]
 pub enum AnalyzeTargetReport {
-    Project(AnalyzeReport),
-    File(AnalyzeFileReport),
+    Project(Box<AnalyzeReport>),
+    File(Box<AnalyzeFileReport>),
 }
 
 #[derive(Debug, Serialize)]

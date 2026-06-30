@@ -31,10 +31,10 @@ winget install ADELA.Devmate
 Until the winget package is accepted, install from GitHub Releases after the first release is published:
 
 Download:
-https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.4/devmate-v0.1.4-x86_64-pc-windows-msvc.zip
+https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.6/devmate-v0.1.6-x86_64-pc-windows-msvc.zip
 
 ```powershell
-iwr "https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.4/devmate-v0.1.4-x86_64-pc-windows-msvc.zip" -OutFile devmate.zip
+iwr "https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.6/devmate-v0.1.6-x86_64-pc-windows-msvc.zip" -OutFile devmate.zip
 Expand-Archive devmate.zip -DestinationPath devmate -Force
 ```
 
@@ -84,22 +84,22 @@ https://github.com/GOALLINNOOUT/Devmate/releases
 
 Expected release files:
 
-- `devmate-v0.1.4-x86_64-pc-windows-msvc.zip`
-- `devmate-v0.1.4-x86_64-unknown-linux-gnu.tar.gz`
-- `devmate-v0.1.4-x86_64-apple-darwin.tar.gz`
-- `devmate-v0.1.4-aarch64-apple-darwin.tar.gz`
+- `devmate-v0.1.6-x86_64-pc-windows-msvc.zip`
+- `devmate-v0.1.6-x86_64-unknown-linux-gnu.tar.gz`
+- `devmate-v0.1.6-x86_64-apple-darwin.tar.gz`
+- `devmate-v0.1.6-aarch64-apple-darwin.tar.gz`
 
 ### Linux
 
 Download:
-https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.4/devmate-v0.1.4-x86_64-unknown-linux-gnu.tar.gz
+https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.6/devmate-v0.1.6-x86_64-unknown-linux-gnu.tar.gz
 
 ```bash
 curl -L \
-  https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.4/devmate-v0.1.4-x86_64-unknown-linux-gnu.tar.gz \
+  https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.6/devmate-v0.1.6-x86_64-unknown-linux-gnu.tar.gz \
   -o devmate-linux.tar.gz
 tar -xzf devmate-linux.tar.gz
-cd devmate-v0.1.4-x86_64-unknown-linux-gnu
+cd devmate-v0.1.6-x86_64-unknown-linux-gnu
 ./devmate setup
 ```
 
@@ -124,7 +124,7 @@ Intel Macs:
 
 ```bash
 curl -L \
-  https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.4/devmate-v0.1.4-x86_64-apple-darwin.tar.gz \
+  https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.6/devmate-v0.1.6-x86_64-apple-darwin.tar.gz \
   -o devmate-macos.tar.gz
 ```
 
@@ -132,7 +132,7 @@ Apple Silicon Macs:
 
 ```bash
 curl -L \
-  https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.4/devmate-v0.1.4-aarch64-apple-darwin.tar.gz \
+  https://github.com/GOALLINNOOUT/Devmate/releases/download/v0.1.6/devmate-v0.1.6-aarch64-apple-darwin.tar.gz \
   -o devmate-macos.tar.gz
 ```
 
@@ -140,7 +140,7 @@ Then extract and install:
 
 ```bash
 tar -xzf devmate-macos.tar.gz
-cd devmate-v0.1.4-*-apple-darwin
+cd devmate-v0.1.6-*-apple-darwin
 ./devmate setup
 mkdir -p ~/.local/bin
 cp devmate ~/.local/bin/devmate
@@ -578,8 +578,8 @@ cargo publish --dry-run
 3. Tag and push:
 
 ```powershell
-git tag v0.1.4
-git push origin v0.1.4
+git tag v0.1.6
+git push origin v0.1.6
 ```
 
 4. Confirm the GitHub Release includes:

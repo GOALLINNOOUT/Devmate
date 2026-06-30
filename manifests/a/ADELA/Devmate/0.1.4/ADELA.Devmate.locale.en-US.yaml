@@ -2,7 +2,7 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.12.0.schema.json
 
 PackageIdentifier: ADELA.Devmate
-PackageVersion: 0.1.4
+PackageVersion: 0.1.6
 PackageLocale: en-US
 Publisher: ADELA
 PublisherUrl: https://github.com/GOALLINNOOUT/Devmate
@@ -28,6 +28,6 @@ Tags:
 - env
 - system
 ReleaseNotes: Adds Windows, Linux, macOS Intel, and macOS Apple Silicon release builds for DevMate.
-ReleaseNotesUrl: https://github.com/GOALLINNOOUT/Devmate/releases/tag/v0.1.4
+ReleaseNotesUrl: https://github.com/GOALLINNOOUT/Devmate/releases/tag/v0.1.6
 ManifestType: defaultLocale
 ManifestVersion: 1.12.0
