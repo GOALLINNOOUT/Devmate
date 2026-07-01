@@ -2,6 +2,12 @@
 
 DevMate is a developer diagnostics CLI for project analysis, env files, Git, JWTs, files, system health, installed tools, updates, and safe cleanup.
 
+## Contact
+
+- Email: adeyekunadelola0@gmail.com
+- WhatsApp: +2347043129502
+- Website: http://adelaportfolio.vercel.app/
+
 It is designed to be useful both for humans in a terminal and for scripts through `--json` output.
 
 ## What DevMate Does

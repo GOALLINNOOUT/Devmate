@@ -277,9 +277,8 @@ fn analyze_file_inner(
         max_nesting_depth,
         large_functions,
     };
-    let lower = text.to_ascii_lowercase();
     let todo_count = if config.warn_todo {
-        lower.matches("todo").count() + lower.matches("fixme").count()
+        todo_marker_count(&language, &text)
     } else {
         0
     };
@@ -646,10 +645,7 @@ impl LanguageHeuristics {
 
     fn extract_imports(&self, text: &str) -> Vec<String> {
         let patterns = match self.language.as_str() {
-            "Rust" => vec![
-                r"(?m)^\s*use\s+([^;]+);",
-                r"(?m)^\s*mod\s+([A-Za-z0-9_]+)\s*;",
-            ],
+            "Rust" => vec![r"(?m)^use\s+([^;]+);", r"(?m)^mod\s+([A-Za-z0-9_]+)\s*;"],
             "JavaScript" | "TypeScript" => vec![
                 r#"(?m)^\s*import\s+.*?\s+from\s+["']([^"']+)["']"#,
                 r#"(?m)^\s*import\s+["']([^"']+)["']"#,
@@ -703,11 +699,16 @@ impl LanguageHeuristics {
                 continue;
             };
             for capture in regex.captures_iter(text) {
-                if let Some(name) = capture.get(1) {
+                let uses_named_captures = capture.name("name").is_some();
+                if let Some(name) = capture.name("name").or_else(|| capture.get(1)) {
                     let line = text[..name.start()].matches('\n').count() + 1;
-                    let visibility = capture
-                        .get(2)
-                        .map(|value| value.as_str().trim().to_string());
+                    let visibility = if uses_named_captures {
+                        capture.name("visibility")
+                    } else {
+                        capture.get(2)
+                    }
+                    .map(|value| value.as_str().trim().to_string())
+                    .filter(|value| !value.is_empty());
                     symbols.push(AnalyzeSymbol {
                         kind: kind.to_string(),
                         name: name.as_str().to_string(),
@@ -723,9 +724,15 @@ impl LanguageHeuristics {
     }
 
     fn debug_logging_count(&self, text: &str) -> usize {
-        self.debug_logging_patterns()
-            .iter()
-            .map(|pattern| text.matches(pattern).count())
+        let patterns = self.debug_logging_patterns();
+        text.lines()
+            .map(strip_quoted_literals)
+            .map(|line| {
+                patterns
+                    .iter()
+                    .filter(|pattern| debug_pattern_matches(&line, pattern))
+                    .count()
+            })
             .sum()
     }
 
@@ -747,10 +754,22 @@ impl LanguageHeuristics {
 fn symbol_patterns(language: &str) -> Vec<(&'static str, &'static str)> {
     match language {
         "Rust" => vec![
-            ("function", r"(?m)^\s*(pub\s+)?fn\s+([A-Za-z0-9_]+)"),
-            ("class", r"(?m)^\s*(pub\s+)?struct\s+([A-Za-z0-9_]+)"),
-            ("enum", r"(?m)^\s*(pub\s+)?enum\s+([A-Za-z0-9_]+)"),
-            ("trait", r"(?m)^\s*(pub\s+)?trait\s+([A-Za-z0-9_]+)"),
+            (
+                "function",
+                r"(?m)^\s*(?P<visibility>pub(?:\([^)]*\))?\s+)?fn\s+(?P<name>[A-Za-z0-9_]+)",
+            ),
+            (
+                "class",
+                r"(?m)^\s*(?P<visibility>pub(?:\([^)]*\))?\s+)?struct\s+(?P<name>[A-Za-z0-9_]+)",
+            ),
+            (
+                "enum",
+                r"(?m)^\s*(?P<visibility>pub(?:\([^)]*\))?\s+)?enum\s+(?P<name>[A-Za-z0-9_]+)",
+            ),
+            (
+                "trait",
+                r"(?m)^\s*(?P<visibility>pub(?:\([^)]*\))?\s+)?trait\s+(?P<name>[A-Za-z0-9_]+)",
+            ),
         ],
         "JavaScript" | "TypeScript" => vec![
             (
@@ -815,6 +834,128 @@ fn symbol_patterns(language: &str) -> Vec<(&'static str, &'static str)> {
     }
 }
 
+fn todo_marker_count(language: &str, text: &str) -> usize {
+    let comment_text = comment_text_for_markers(language, text);
+    Regex::new(r"(?i)\b(?:todo|fixme)\b")
+        .map(|regex| regex.find_iter(&comment_text).count())
+        .unwrap_or_default()
+}
+
+fn comment_text_for_markers(language: &str, text: &str) -> String {
+    match language {
+        "Rust" | "JavaScript" | "TypeScript" | "Java" | "Kotlin" | "Scala" | "C" | "C++" | "C#"
+        | "PHP" | "Swift" | "Dart" | "Go" => c_style_comments(text),
+        "Python" | "Ruby" | "R" => line_comments(text, &["#"]),
+        "Lua" | "SQL" => line_comments(text, &["--"]),
+        _ => line_comments(text, &["//", "#", "--"]),
+    }
+}
+
+fn c_style_comments(text: &str) -> String {
+    let mut comments = String::new();
+    let chars = text.char_indices().collect::<Vec<_>>();
+    let mut index = 0;
+    let mut quote = None;
+    let mut escaped = false;
+
+    while index < chars.len() {
+        let (byte_index, ch) = chars[index];
+        let next = chars.get(index + 1).map(|(_, next)| *next);
+        if let Some(active_quote) = quote {
+            if escaped {
+                escaped = false;
+            } else if ch == '\\' {
+                escaped = true;
+            } else if ch == active_quote {
+                quote = None;
+            }
+            index += 1;
+            continue;
+        }
+
+        if matches!(ch, '"' | '\'') {
+            quote = Some(ch);
+            index += 1;
+            continue;
+        }
+
+        if ch == '/' && next == Some('/') {
+            let rest = &text[byte_index..];
+            let end = rest.find('\n').unwrap_or(rest.len());
+            comments.push_str(&rest[..end]);
+            comments.push('\n');
+            index += rest[..end].chars().count();
+            continue;
+        }
+
+        if ch == '/' && next == Some('*') {
+            let rest = &text[byte_index..];
+            let end = rest.find("*/").map(|end| end + 2).unwrap_or(rest.len());
+            comments.push_str(&rest[..end]);
+            comments.push('\n');
+            index += rest[..end].chars().count();
+            continue;
+        }
+
+        index += 1;
+    }
+
+    comments
+}
+
+fn line_comments(text: &str, markers: &[&str]) -> String {
+    let mut comments = String::new();
+    for line in text.lines() {
+        let Some(index) = markers.iter().filter_map(|marker| line.find(marker)).min() else {
+            continue;
+        };
+        comments.push_str(&line[index..]);
+        comments.push('\n');
+    }
+    comments
+}
+
+fn strip_quoted_literals(line: &str) -> String {
+    let mut output = String::with_capacity(line.len());
+    let mut chars = line.chars().peekable();
+    let mut quote = None;
+    let mut escaped = false;
+    while let Some(ch) = chars.next() {
+        if let Some(active_quote) = quote {
+            if escaped {
+                escaped = false;
+            } else if ch == '\\' {
+                escaped = true;
+            } else if ch == active_quote {
+                quote = None;
+            }
+            output.push(' ');
+        } else if matches!(ch, '"' | '\'') {
+            quote = Some(ch);
+            output.push(' ');
+        } else {
+            output.push(ch);
+        }
+    }
+    output
+}
+
+fn debug_pattern_matches(line: &str, pattern: &str) -> bool {
+    let Some(index) = line.find(pattern) else {
+        return false;
+    };
+    if pattern.ends_with('!') {
+        let previous = line[..index].chars().next_back();
+        if matches!(
+            previous,
+            Some(':') | Some('_') | Some('a'..='z') | Some('A'..='Z') | Some('0'..='9')
+        ) {
+            return false;
+        }
+    }
+    true
+}
+
 fn capture_all(text: &str, patterns: &[&str]) -> Vec<String> {
     let mut values = Vec::new();
     for pattern in patterns {
@@ -839,11 +980,12 @@ fn estimate_symbol_lines(text: &str, start_line: usize) -> usize {
     let mut depth = 0_i32;
     let mut seen_body = false;
     for (idx, line) in lines.iter().enumerate() {
-        depth += line.matches('{').count() as i32;
-        if line.contains('{') {
+        let code = strip_quoted_literals(line);
+        depth += code.matches('{').count() as i32;
+        if code.contains('{') {
             seen_body = true;
         }
-        depth -= line.matches('}').count() as i32;
+        depth -= code.matches('}').count() as i32;
         if seen_body && depth <= 0 && idx > 0 {
             return idx + 1;
         }
@@ -857,12 +999,15 @@ fn estimate_symbol_lines(text: &str, start_line: usize) -> usize {
 fn max_nesting_depth(text: &str) -> usize {
     let mut depth = 0_usize;
     let mut max = 0_usize;
-    for ch in text.chars() {
-        if ch == '{' {
-            depth += 1;
-            max = max.max(depth);
-        } else if ch == '}' {
-            depth = depth.saturating_sub(1);
+    for line in text.lines() {
+        let code = strip_quoted_literals(line);
+        for ch in code.chars() {
+            if ch == '{' {
+                depth += 1;
+                max = max.max(depth);
+            } else if ch == '}' {
+                depth = depth.saturating_sub(1);
+            }
         }
     }
     max
@@ -2304,6 +2449,95 @@ mod tests {
         assert_eq!(report.language, "TypeScript");
         assert!(report.imports.contains(&"./x".to_string()));
         assert!(report.symbols.iter().any(|symbol| symbol.name == "login"));
+    }
+
+    #[test]
+    fn rust_analyzer_extracts_symbol_names_and_visibility() {
+        let dir = tempdir().unwrap();
+        let rs = dir.path().join("lib.rs");
+        fs::write(
+            &rs,
+            "pub fn run() {}\nfn helper() {}\npub(crate) struct Worker;\n",
+        )
+        .unwrap();
+
+        let report = analyze_file_target(&rs, &AnalyzeConfig::default()).unwrap();
+        assert!(report.symbols.iter().any(|symbol| {
+            symbol.kind == "function"
+                && symbol.name == "run"
+                && symbol.visibility.as_deref() == Some("pub")
+        }));
+        assert!(report
+            .symbols
+            .iter()
+            .any(|symbol| symbol.kind == "function" && symbol.name == "helper"));
+        assert!(report.symbols.iter().any(|symbol| {
+            symbol.kind == "class"
+                && symbol.name == "Worker"
+                && symbol.visibility.as_deref() == Some("pub(crate)")
+        }));
+    }
+
+    #[test]
+    fn rust_imports_ignore_nested_test_module_imports() {
+        let dir = tempdir().unwrap();
+        let rs = dir.path().join("lib.rs");
+        fs::write(
+            &rs,
+            "use std::fs;\n#[cfg(test)]\nmod tests {\n    use super::*;\n}\n",
+        )
+        .unwrap();
+
+        let report = analyze_file_target(&rs, &AnalyzeConfig::default()).unwrap();
+        assert!(report.imports.contains(&"std::fs".to_string()));
+        assert!(!report.imports.contains(&"super::*".to_string()));
+    }
+
+    #[test]
+    fn todo_count_only_counts_comment_markers() {
+        let dir = tempdir().unwrap();
+        let rs = dir.path().join("lib.rs");
+        fs::write(
+            &rs,
+            "let todo_count = \"TODO not a marker\";\n// TODO: real work\n/* FIXME: real block */\n",
+        )
+        .unwrap();
+
+        let report = analyze_file_target(&rs, &AnalyzeConfig::default()).unwrap();
+        assert_eq!(report.todo_count, 2);
+    }
+
+    #[test]
+    fn rust_debug_logging_ignores_renderer_calls_and_strings() {
+        let dir = tempdir().unwrap();
+        let rs = dir.path().join("lib.rs");
+        fs::write(
+            &rs,
+            "fn main() {\n anstream::println!(\"status\");\n let pattern = \"println!\";\n dbg!(42);\n eprintln!(\"oops\");\n}\n",
+        )
+        .unwrap();
+
+        let report = analyze_file_target(&rs, &AnalyzeConfig::default()).unwrap();
+        assert_eq!(report.logging_count, 2);
+    }
+
+    #[test]
+    fn rust_function_length_ignores_quoted_braces() {
+        let dir = tempdir().unwrap();
+        let rs = dir.path().join("lib.rs");
+        fs::write(
+            &rs,
+            "fn braces() {\n let open = \"{\";\n let close = '}';\n}\n",
+        )
+        .unwrap();
+
+        let report = analyze_file_target(&rs, &AnalyzeConfig::default()).unwrap();
+        let symbol = report
+            .symbols
+            .iter()
+            .find(|symbol| symbol.name == "braces")
+            .unwrap();
+        assert_eq!(symbol.lines, 4);
     }
 
     #[test]
